@@ -1,0 +1,8 @@
+node_modules/
+dist/vendor/
+dist/sw.js
+.sites-runtime/
+*.tar.gz
+*.zip
+qa/
+.DS_Store

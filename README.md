@@ -1,0 +1,74 @@
+# 拾知 · 个人学习空间
+
+把知识一点点变成自己的。一个适合手机和电脑的学习 PWA，暖白与墨绿色界面，无需付费 API。
+
+**在线使用：[yang071212.github.io/shizhi-study](https://yang071212.github.io/shizhi-study/)**
+
+## 已有功能
+
+- **今日学习**：按北京时间每日切换 C、Python、高数、线代四门微课；展示真实完成数量、连续学习天数与专注时长。
+- **学科课程**：40 节原创基础复习课，每科 10 节，包含概念、示例、要点、自测和解析。
+- **知识库**：搜索全部课程知识点，按学科、错题、到期复习筛选；可自由添加新学科和自己的知识点。
+- **PDF 书架**：从设备导入电子书，分页阅读、跳页、缩放、记住进度和下载原文件。每本最大 100 MB。
+- **学习笔记**：自建笔记、标签、Markdown / 文本导入。带“知识点”标签的笔记同时进入知识库。
+- **间隔复习**：学完后次日复习；根据“还不熟 / 记住了 / 很轻松”安排 1、3、7、14、30、60、90 天间隔。简单透明的启发式规则，不声称采用 FSRS。
+- **专注计时**：15 / 25 / 45 / 50 分钟，支持暂停与继续，完整完成才记入专注时长。
+- **资源花园**：精选 GitHub 开源教程和应用组件，可添加任何其他学科的资源链接。
+- **离线与备份**：PWA 缓存课程、公式与阅读器；完整 JSON 备份包含 PDF 原文件、阅读进度、笔记和学习记录。
+
+## 手机安装
+
+1. 用手机浏览器打开上面的在线地址。
+2. iPhone / iPad：Safari → 分享 → **添加到主屏幕**。
+3. Android：Chrome / Edge 菜单 → **安装应用**或**添加到主屏幕**。
+4. 首次保持联网，等待离线缓存完成。导入自己的 PDF 后即可继续阅读。
+
+这是浏览器可安装的 PWA，不是 APK 或 App Store 原生包。部分内嵌浏览器不提供安装或持久存储，请用系统浏览器打开。
+
+## 每日自动更新的边界
+
+- **学习清单**：北京时间 00:00 根据日期从现有课程库换一组，离线也能计算。每科一节，10 天为一个周期，不会把每日轮换称为新增教材。
+- **资源信息与在线发布**：GitHub Actions 每天北京时间 **06:15**（UTC 前一天 22:15）检查项目元数据，重新发布 Pages。GitHub 可能排队或延迟；长时间无提交的公开仓库定时工作流可能被 GitHub 停用，需要在 Actions 中重新启用。
+- **课程正文**：随代码中的 `dist/content.mjs` 内容版本更新扩充。当前为原创整理的基础知识，不承诺覆盖具体教材全部大纲。
+- **来源失败**：保留上次有效数据，记录本次失败；`checkedAt` 是检查时间，`lastSuccessAt` 是成功检查时间，`pushedAt` 是上游仓库推送时间，三者不混用。
+- 每日发布更新的是公开资源与课程应用；个人文件和学习数据保存在设备上。
+
+## 数据和隐私
+
+PDF 存在 IndexedDB，学习状态存在 localStorage，专注计时存在 sessionStorage。应用不把个人文件、笔记和学习记录上传到 GitHub 或其他服务器，不需要输入 API Key。
+
+不同浏览器、设备、网址来源的本地数据相互独立，**不会自动跨设备同步**。迁移时在“空间设置”导出完整备份，到另一个设备导入；恢复会替换学习状态与笔记，PDF 按 ID 合并。备份中的 PDF 总大小限制 200 MB。浏览器可能清理本地存储，重要资料请定期备份。
+
+私有部署与 GitHub Pages 是不同网址，本地书架也各自独立。公开仓库不应加入个人 PDF、备份 JSON 或私密笔记。不要把尚未授权再分发的教材提交到仓库。
+
+## 本地运行
+
+需要 Node.js 22.16+，CI 使用 Node.js 24。
+
+```bash
+npm ci
+npm test
+npm run refresh
+npm run build
+npm start
+```
+
+打开 `http://localhost:4173`。首次安装会下载 PDF.js 与 KaTeX；`build` 把依赖及字体复制到 `dist/vendor`，生成对应版本的 Service Worker。不依赖运行时 CDN。
+
+`localhost` 只代表当前设备。手机要用在线 HTTPS 地址，或自行配置可信 HTTPS；不要把电脑的 localhost 当作手机访问地址。
+
+## 添加学习内容
+
+无需改代码：在应用里添加知识点、笔记、PDF、资源链接。
+
+添加正式课程：编辑 `dist/content.mjs` 的 `SUBJECTS` / `LESSONS`，保留稳定的 `id`，每节包含 `subject,title,chapter,minutes,level,summary,objectives,content,takeaways,quiz`。正文支持 Markdown 标题、列表、代码块和 KaTeX `$...$` / `$$...$$` 公式。
+
+扩展新学科时，为学科添加简介与章节，再添加对应课程；前端会读取这些内容。每日清单默认前四个核心学科，自定义学科仍可通过课程和知识库访问。
+
+## 开源资源
+
+直接集成 [PDF.js](https://github.com/mozilla/pdf.js)（Apache-2.0）与 [KaTeX](https://github.com/KaTeX/KaTeX)（MIT），保留分发许可。
+
+课程参考入口包括 [网道 C 教程](https://github.com/wangdoc/clang-tutorial)、[Datawhale 聪明办法学 Python](https://github.com/datawhalechina/learn-python-the-smart-way-v2)、[TheAlgorithms/Python](https://github.com/TheAlgorithms/Python) 和 [动手学深度学习的数学基础](https://github.com/d2l-ai/d2l-zh)。这些外部教材仅链接，不复制正文。完整条目及各自许可见 `dist/resources.json`，第三方声明见 `dist/THIRD_PARTY_NOTICES.txt`。
+
+应用原创代码与课程采用 MIT 许可，第三方部分按原许可分发。
