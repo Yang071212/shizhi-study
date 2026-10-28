@@ -6,9 +6,9 @@ for(const [from,to] of [['node_modules/pdfjs-dist/legacy/build/pdf.min.mjs','pdf
 const pdfLicense=await readFile('node_modules/pdfjs-dist/LICENSE','utf8'),mathLicense=await readFile('node_modules/katex/LICENSE','utf8');
 await writeFile('dist/THIRD_PARTY_NOTICES.txt',`拾知 · 第三方开源声明\n\nPDF.js 6.4.299 — https://github.com/mozilla/pdf.js\n${pdfLicense}\n\nKaTeX 0.19.1 — https://github.com/KaTeX/KaTeX\n${mathLicense}\n\n课程正文为原创整理。资源花园中的外部教程仅提供链接；各内容许可见原项目。\n`);
 // Keep the font-specific licenses shipped by PDF.js along with their font files.
-const core=['./','./index.html','./styles.css','./memory.css','./app.mjs','./core.mjs','./content.mjs','./pdf-reader.mjs','./study-memory.mjs','./memory-ui.mjs','./resources.json','./daily.json','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./vendor/pdf.mjs','./vendor/pdf.worker.mjs','./vendor/katex.min.js','./vendor/katex.min.css'];
+const core=['./','./index.html','./styles.css','./memory.css','./app.mjs','./core.mjs','./content.mjs','./pdf-reader.mjs','./study-memory.mjs','./memory-ui.mjs','./mobile-sync.mjs','./phone.html','./phone.css','./phone.css?v=1','./phone-sync.mjs','./phone-sync.mjs?v=1','./core.mjs?phone-sync=1','./resources.json','./daily.json','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./vendor/pdf.mjs','./vendor/pdf.worker.mjs','./vendor/katex.min.js','./vendor/katex.min.css'];
 for(const d of ['fonts','standard_fonts','wasm'])for(const f of await readdir(path.join(vendor,d))){if((await stat(path.join(vendor,d,f))).isFile())core.push(`./vendor/${d}/${f}`);}
-const digest=createHash('sha256');for(const name of core.filter(x=>x!=='./'))digest.update(await readFile(path.join('dist',name.slice(2))));const version=digest.digest('hex').slice(0,12);
+const digest=createHash('sha256');for(const name of core.filter(x=>x!=='./'))digest.update(await readFile(path.join('dist',name.slice(2).split('?')[0])));const version=digest.digest('hex').slice(0,12);
 await writeFile('dist/sw.js',`/* Generated from the exact published assets. */
 const CACHE='shizhi-${version}';const CORE=${JSON.stringify(core)};
 self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(CORE);await self.skipWaiting();})()));
