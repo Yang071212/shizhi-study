@@ -1,4 +1,5 @@
 /* Device-local learning state and PDF storage. No account or network access. */
+import { normalizeMemory } from './study-memory.mjs';
 export const STATE_KEY = 'shizhi-state-v1';
 export const RECOVERY_KEY = 'shizhi-state-v1-recovery';
 export const BACKUP_FORMAT = 'shizhi-backup';
@@ -45,8 +46,24 @@ export function dailyLessons(lessons, dateKey = todayKey(), limit = 4) {
   });
 }
 
+/** Personalization only changes suggestions; imported history never grants mastery. */
+export function personalizedDailyLessons(lessons, state, dateKey = todayKey(), limit = 4) {
+  const baseline = dailyLessons(lessons, dateKey, limit);
+  if (!state?.memory) return baseline;
+  let memory;
+  try { memory = normalizeMemory(state.memory); } catch { return baseline; }
+  const focused = new Set(memory.focus.flatMap(topic => topic.lessonIds));
+  const offset = Math.floor((dayValue(dateKey) - dayValue('2026-10-27')) / DAY);
+  return baseline.map(fallback => {
+    const candidates = lessons.filter(lesson => lesson.subject === fallback.subject && focused.has(lesson.id) && (!state.completed?.[lesson.id] || state.quiz?.[lesson.id]?.correct === false));
+    const mistakes = candidates.filter(lesson => state.quiz?.[lesson.id]?.correct === false);
+    const pool = mistakes.length ? mistakes : candidates;
+    return pool.length ? pool[((offset % pool.length) + pool.length) % pool.length] : fallback;
+  });
+}
+
 export function emptyState() {
-  return { completed: {}, reviews: {}, quiz: {}, notes: [], customResources: [], sessions: [], settings: { goal: 30, theme: 'light' }, dailyDone: {} };
+  return { completed: {}, reviews: {}, quiz: {}, notes: [], customResources: [], sessions: [], settings: { goal: 30, theme: 'light', memoryAutoSync: true }, dailyDone: {}, memory: null };
 }
 
 function text(v, max, label, allowEmpty = true) {
@@ -119,11 +136,13 @@ export function validateImport(data) {
   });
   if (data.settings !== undefined && !record(data.settings)) fail('设置格式无效');
   const settings = data.settings ?? {};
-  s.settings = { goal: integer(settings.goal ?? 30, 5, 240, '每日目标'), theme: ['light', 'dark', 'system'].includes(settings.theme) ? settings.theme : 'light' };
+  if (settings.memoryAutoSync !== undefined && typeof settings.memoryAutoSync !== 'boolean') fail('记忆自动同步设置无效');
+  s.settings = { goal: integer(settings.goal ?? 30, 5, 240, '每日目标'), theme: ['light', 'dark', 'system'].includes(settings.theme) ? settings.theme : 'light', memoryAutoSync: settings.memoryAutoSync ?? true };
   if (data.dailyDone !== undefined && !record(data.dailyDone)) fail('每日记录格式无效');
   if (Object.keys(data.dailyDone ?? {}).length > 36500) fail('每日记录过多');
   for (const [key, value] of Object.entries(data.dailyDone ?? {})) s.dailyDone[date(key)] = [...new Set(list(value, 1000, '每日完成记录').map(id))];
   if (new Set(s.notes.map(v => v.id)).size !== s.notes.length || new Set(s.customResources.map(v => v.id)).size !== s.customResources.length) fail('内容存在重复 ID');
+  s.memory = data.memory == null ? null : normalizeMemory(data.memory);
   return s;
 }
 
